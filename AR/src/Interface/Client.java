@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.*;
+import java.util.HashMap;
 /**
  *
  * @author datri
@@ -35,9 +36,13 @@ public class Client extends javax.swing.JFrame {
     Socket SERVER;
     
     private String user;
+    private DefaultListModel list;
+    private String destination;
     
-    int xMouse;
-    int yMouse;
+    private HashMap<String,String> chats;
+    
+    private int xMouse;
+    private int yMouse;
     BufferedReader getter;
     PrintWriter outer;
     
@@ -45,12 +50,20 @@ public class Client extends javax.swing.JFrame {
         initComponents();
         this.setLocationRelativeTo(null);
         this.getRootPane().setWindowDecorationStyle(JRootPane.FRAME);
+        list = (DefaultListModel) friends.getModel();
+        Input.setEditable(false);
         
-        jTextScreen.setEditable(false);
+        chats = new HashMap<String,String>();
+        destination="none";
+        
+        Screen.setEditable(false);
         Input.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e){
+                outer.println(destination);
                 outer.println(Input.getText());
-                System.out.println("OUT "+Input.getText());
+                Screen.append(user+": "+Input.getText());
+                chats.put(destination, Screen.getText());
+                //System.out.println("OUT "+Input.getText());
                 Input.setText("");
                 
             }
@@ -80,16 +93,16 @@ public class Client extends javax.swing.JFrame {
         jScrollPane2 = new javax.swing.JScrollPane();
         jTextPaneSearch = new javax.swing.JTextPane();
         jScrollPane3 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList<>();
+        friends = new javax.swing.JList<>();
         Input = new javax.swing.JTextField();
         jPanel2 = new javax.swing.JPanel();
         jLabelClose = new javax.swing.JLabel();
         jLabelMinimize = new javax.swing.JLabel();
         jLabelDrag = new javax.swing.JLabel();
         jLabelMaximize = new javax.swing.JLabel();
-        User_name = new javax.swing.JLabel();
+        user_name = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTextScreen = new javax.swing.JTextArea();
+        Screen = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setBackground(new java.awt.Color(51, 51, 51));
@@ -104,19 +117,19 @@ public class Client extends javax.swing.JFrame {
 
         jScrollPane2.setViewportView(jTextPaneSearch);
 
-        jScrollPane3.setBorder(null);
-
-        jList1.setBackground(new java.awt.Color(51, 51, 51));
-        jList1.setForeground(new java.awt.Color(255, 255, 255));
-        jList1.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "fdgfdgfd fdgdf df", "dfgdfg", "dfg", "dfg", "df", "gdfgdf", "gdf", "dfg ", "dfgdf", "g dfg", "fdg", "dfg", " ", "d f", "gdf" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
+        friends.setBackground(new java.awt.Color(51, 51, 51));
+        friends.setForeground(new java.awt.Color(255, 255, 255));
+        friends.setModel(new DefaultListModel ());
+        friends.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        friends.setToolTipText("");
+        friends.setFixedCellHeight(70);
+        friends.setSelectionBackground(new java.awt.Color(153, 0, 153));
+        friends.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+                friendsValueChanged(evt);
+            }
         });
-        jList1.setToolTipText("");
-        jList1.setFixedCellHeight(70);
-        jList1.setSelectionBackground(new java.awt.Color(153, 0, 153));
-        jScrollPane3.setViewportView(jList1);
+        jScrollPane3.setViewportView(friends);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -124,9 +137,9 @@ public class Client extends javax.swing.JFrame {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jScrollPane3)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane2)
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 244, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -135,7 +148,7 @@ public class Client extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(11, 11, 11)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 622, Short.MAX_VALUE))
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 684, Short.MAX_VALUE))
         );
 
         Input.setBackground(new java.awt.Color(51, 51, 51));
@@ -250,35 +263,38 @@ public class Client extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        User_name.setOpaque(true);
+        user_name.setBackground(new java.awt.Color(51, 51, 51));
+        user_name.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        user_name.setForeground(new java.awt.Color(255, 255, 255));
+        user_name.setOpaque(true);
 
         jScrollPane1.setBackground(new java.awt.Color(51, 51, 51));
         jScrollPane1.setBorder(null);
         jScrollPane1.setForeground(new java.awt.Color(255, 255, 255));
 
-        jTextScreen.setBackground(new java.awt.Color(51, 51, 51));
-        jTextScreen.setColumns(20);
-        jTextScreen.setForeground(new java.awt.Color(255, 255, 255));
-        jTextScreen.setRows(5);
-        jTextScreen.setBorder(null);
-        jScrollPane1.setViewportView(jTextScreen);
+        Screen.setBackground(new java.awt.Color(51, 51, 51));
+        Screen.setColumns(20);
+        Screen.setForeground(new java.awt.Color(255, 255, 255));
+        Screen.setRows(5);
+        Screen.setBorder(null);
+        jScrollPane1.setViewportView(Screen);
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 1089, Short.MAX_VALUE)
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 1129, Short.MAX_VALUE)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(Input, javax.swing.GroupLayout.DEFAULT_SIZE, 807, Short.MAX_VALUE)
+                            .addComponent(Input, javax.swing.GroupLayout.DEFAULT_SIZE, 849, Short.MAX_VALUE)
                             .addComponent(jScrollPane1)))
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(User_name, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(user_name, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
@@ -286,7 +302,7 @@ public class Client extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(User_name, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(user_name, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
@@ -382,6 +398,16 @@ public class Client extends javax.swing.JFrame {
         //this.setExtendedState(this.getExtendedState() | Frame.MAXIMIZED_BOTH);
     }//GEN-LAST:event_jLabelMaximizeMouseReleased
 
+    private void friendsValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_friendsValueChanged
+        if (!evt.getValueIsAdjusting()) {
+            System.out.println("CHANGED: "+destination+" -> "+friends.getSelectedValue());
+            destination=friends.getSelectedValue();
+            Input.setEditable(true);
+            Screen.setText(chats.get(destination));
+            
+        }
+    }//GEN-LAST:event_friendsValueChanged
+    
     /**
      * @param args the command line arguments
      */
@@ -467,16 +493,36 @@ public class Client extends javax.swing.JFrame {
         getter = new BufferedReader(new InputStreamReader(SERVER.getInputStream()));
         outer = new PrintWriter(SERVER.getOutputStream(),true);
         String x;
+        String split[];
         
         while(true){
             x = getter.readLine();
             if (x.startsWith("SUBMITNAME")) {
-                outer.println(getUserName());
-            } else if (x.startsWith("NAMEACCEPTED")) {
-                Input.setEditable(true);
-            } else if (x.startsWith("MESSAGE")) {
-                System.out.println("GET "+x.substring(8));
-                jTextScreen.append(x.substring(8) + "\n");
+                user=getUserName();
+                if(user == null)
+                    System.exit(0);
+                else
+                    outer.println(user);
+            } 
+            else if (x.startsWith("NAMEACCEPTED")) {
+                user_name.setText(user);
+            } 
+            else if (x.startsWith("ADD")) {
+                //System.out.println("GET "+x.substring(4));
+                addFriend(x.substring(4));
+            } 
+            else if (x.startsWith("MESSAGE")) {
+                //System.out.println("GET "+x.substring(8));
+                split=x.split(" ");
+
+                if(split[1].equals(destination+ ": ")){
+                    Screen.append(x.substring(8) + "\n");
+                    chats.put(destination, Screen.getText());
+                }
+                else{
+                    chats.put(split[1].split(":")[0], chats.get(split[1].split(":")[0])+x.substring(8)+"\n");
+                }
+                //System.out.println("Key: "+destination+" // Value: "+chats.get(destination));
             }
         }
     }
@@ -488,15 +534,21 @@ public class Client extends javax.swing.JFrame {
             "User",
             JOptionPane.PLAIN_MESSAGE);
     }
-
+    public void addFriend(String name){
+      
+        list.addElement(name);
+        chats.put(name, "");
+    }
+    
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField Input;
-    private javax.swing.JLabel User_name;
+    private javax.swing.JTextArea Screen;
+    private javax.swing.JList<String> friends;
     private javax.swing.JLabel jLabelClose;
     private javax.swing.JLabel jLabelDrag;
     private javax.swing.JLabel jLabelMaximize;
     private javax.swing.JLabel jLabelMinimize;
-    private javax.swing.JList<String> jList1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -504,6 +556,7 @@ public class Client extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JTextPane jTextPaneSearch;
-    private javax.swing.JTextArea jTextScreen;
+    private javax.swing.JLabel user_name;
     // End of variables declaration//GEN-END:variables
+    private DefaultListModel listModel;
 }

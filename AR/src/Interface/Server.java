@@ -44,16 +44,16 @@ public class Server {
      * The set of all names of clients in the chat room.  Maintained
      * so that we can check that new clients are not registering name
      * already in use.
-     */
+     
     private static HashSet<String> names = new HashSet<String>();
 
     /**
      * The set of all the print writers for all the clients.  This
      * set is kept so we can easily broadcast messages.
-     */
+     
     private static HashSet<PrintWriter> writers = new HashSet<PrintWriter>();
-
-    private static HashMap<String,PrintWriter> user = new HashMap<String,PrintWriter>();
+   */
+    private static HashMap<String,PrintWriter> user;
     /**
      * The appplication main method, which just listens on a port and
      * spawns handler threads.
@@ -61,18 +61,17 @@ public class Server {
     public static void main(String[] args) throws Exception {
         System.out.println("The chat server is running.");
         
-        InetAddress ip;
-	  	  try {
-	  		ip = InetAddress.getLocalHost();
-	  		System.out.println("Current IP address : " + ip.getHostAddress());
-	
-	  	  } catch (UnknownHostException e) {
-	
-	  		e.printStackTrace();
-	
-	  	  }
-
+        user = new HashMap<String,PrintWriter>();
         
+        InetAddress ip;
+        try {
+            ip = InetAddress.getLocalHost();
+            System.out.println("Current IP address : " + ip.getHostAddress());
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+            System.exit(0);
+        }
+
         ServerSocket listener = new ServerSocket(PORT);
         try {
             while (true) {
@@ -99,8 +98,8 @@ public class Server {
          * Constructs a handler thread, squirreling away the socket.
          * All the interesting work is done in the run method.
          */
-        public Handler(Socket socket) {
-            this.socket = socket;
+        public Handler(Socket s) {
+            socket = s;
         }
 
         /**
@@ -125,12 +124,18 @@ public class Server {
                 while (true) {
                     out.println("SUBMITNAME");
                     name = in.readLine();
-                    if (name == null) {
+                    //System.out.println(name);
+                    if (name.equals("") ) {
                         return;
                     }
+                    //synchronized se asegura de que solo haya un único usuario accediendo
+                    //a la variable estática user, mantiene a los nuevos en espera
                     synchronized (user) {
                         if (!user.containsKey(name)) {
                             user.put(name, out);
+                            user.forEach(
+                                (k,v)->refresh(k)
+                            );
                             break;
                         }
                     }
@@ -140,15 +145,19 @@ public class Server {
                 // socket's print writer to the set of all writers so
                 // this client can receive broadcast messages.
                 out.println("NAMEACCEPTED");
-            
+                
 
                 // Accept messages from this client and broadcast them.
                 // Ignore other clients that cannot be broadcasted to.
+                String dest;
+                String input;
+                
                 while (true) {
-                    String input = in.readLine();
-                    if (input == null) {
+                    dest = in.readLine();
+                    input=in.readLine();
+                    if (dest==null || input == null) {
                         return;
-                    }         
+                    }
                     System.out.println("Received "+input);
                     /*
                     for (PrintWriter writer : writers) {
@@ -157,27 +166,34 @@ public class Server {
                     */
                 
                     //user.get(name).println("MESSAGE " + name + ": " + input);
-                
-                    user.forEach(                    
-                            (k,v)->user.get(k).println("MESSAGE " + name + ": " + input)                 
-                    );
 
+                    user.get(dest).println("MESSAGE " + name + ": " + input);
+                    //user.get(name).println("MESSAGE " + name + ": " + input);
+                    /*
+                    user.forEach(      
+                        (k,v)->user.get(k).println("MESSAGE " + name + ": " + input)                 
+                    );
+                    */
                 }
             } catch (IOException e) {
                 System.out.println(e);
             } finally {
                 // This client is going down!  Remove its name and its print
                 // writer from the sets, and close its socket.
-                if (name != null) {
-                    names.remove(name);
-                }
-                if (out != null) {
-                    writers.remove(out);
+                if (user != null) {
+                    user.remove(name);
                 }
                 try {
                     socket.close();
                 } catch (IOException e) {
                 }
+            }
+        }
+        
+        private void refresh(String k){
+            if(k!=name){
+                user.get(name).println("ADD "+k);
+                user.get(k).println("ADD "+name);
             }
         }
     }
