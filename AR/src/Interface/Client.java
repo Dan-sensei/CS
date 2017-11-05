@@ -28,7 +28,7 @@ import java.net.*;
  *
  * @author datri
  */
-public class Main extends javax.swing.JFrame {
+public class Client extends javax.swing.JFrame {
 
     private int PORT;
     private String server_name;
@@ -41,7 +41,7 @@ public class Main extends javax.swing.JFrame {
     BufferedReader getter;
     PrintWriter outer;
     
-    public Main() {
+    public Client() {
         initComponents();
         this.setLocationRelativeTo(null);
         this.getRootPane().setWindowDecorationStyle(JRootPane.FRAME);
@@ -50,7 +50,9 @@ public class Main extends javax.swing.JFrame {
         Input.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e){
                 outer.println(Input.getText());
+                System.out.println("OUT "+Input.getText());
                 Input.setText("");
+                
             }
         
         });
@@ -133,7 +135,7 @@ public class Main extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(11, 11, 11)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 626, Short.MAX_VALUE))
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 622, Short.MAX_VALUE))
         );
 
         Input.setBackground(new java.awt.Color(51, 51, 51));
@@ -290,7 +292,8 @@ public class Main extends javax.swing.JFrame {
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(jScrollPane1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(Input, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(Input, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(6, 6, 6))
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
 
@@ -432,17 +435,18 @@ public class Main extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(Main.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Client.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(Main.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Client.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(Main.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Client.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(Main.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Client.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
+        //</editor-fold>
         
-        Main chat = new Main();
+        Client chat = new Client();
         chat.setVisible(true);
         chat.createAnsShowGui();
         chat.handler();
@@ -461,19 +465,28 @@ public class Main extends javax.swing.JFrame {
         
         SERVER=new Socket(server_name, PORT);
         getter = new BufferedReader(new InputStreamReader(SERVER.getInputStream()));
-        outer = new PrintWriter(SERVER.getOutputStream());
+        outer = new PrintWriter(SERVER.getOutputStream(),true);
         String x;
         
         while(true){
             x = getter.readLine();
             if (x.startsWith("SUBMITNAME")) {
-                outer.println(user);
+                outer.println(getUserName());
             } else if (x.startsWith("NAMEACCEPTED")) {
                 Input.setEditable(true);
             } else if (x.startsWith("MESSAGE")) {
+                System.out.println("GET "+x.substring(8));
                 jTextScreen.append(x.substring(8) + "\n");
             }
         }
+    }
+    
+    private String getUserName() {
+        return JOptionPane.showInputDialog(
+            this,
+            "Nombre de usuario:",
+            "User",
+            JOptionPane.PLAIN_MESSAGE);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

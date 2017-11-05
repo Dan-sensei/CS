@@ -148,24 +148,20 @@ public class Server {
                     String input = in.readLine();
                     if (input == null) {
                         return;
-                    }
-                    
-                    
-                    
-                    
+                    }         
+                    System.out.println("Received "+input);
                     /*
                     for (PrintWriter writer : writers) {
                         writer.println("MESSAGE " + name + ": " + input);
                     }
                     */
-                    
-                    
-                    user.get(name).println("MESSAGE " + name + ": " + input);
-                    
-                    if(!name.equals("A")) {
-                    	user.get(name).println("MESSAGE " + name + ": " + input);
-                    }
-                    
+                
+                    //user.get(name).println("MESSAGE " + name + ": " + input);
+                
+                    user.forEach(                    
+                            (k,v)->user.get(k).println("MESSAGE " + name + ": " + input)                 
+                    );
+
                 }
             } catch (IOException e) {
                 System.out.println(e);

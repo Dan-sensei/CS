@@ -86,6 +86,7 @@
                           <Component id="jScrollPane1" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="Input" min="-2" pref="30" max="-2" attributes="0"/>
+                          <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
                       </Group>
                       <Component id="jPanel1" max="32767" attributes="0"/>
                   </Group>
@@ -120,7 +121,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jScrollPane2" min="-2" pref="30" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="11" max="-2" attributes="0"/>
-                      <Component id="jScrollPane3" pref="626" max="32767" attributes="0"/>
+                      <Component id="jScrollPane3" pref="622" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
