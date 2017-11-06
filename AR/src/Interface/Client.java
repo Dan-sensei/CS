@@ -506,7 +506,12 @@ public class Client extends javax.swing.JFrame {
         while(true){
             x = getter.readLine();
             if (x.startsWith("SUBMITNAME")) {
-                user=getUserName();
+               // user=getUserName();
+               
+                Login login = new Login();
+                user=login.getUsername();
+                
+                //System.out.println("In");
                 if(user == null)
                     System.exit(0);
                 else
@@ -537,17 +542,26 @@ public class Client extends javax.swing.JFrame {
     }
     
     private String getUserName() {
+        
         Login login = new Login();
+        login.setVisible(true);
+        
         return JOptionPane.showInputDialog(
-            login,
-            "Nombre de usuario:",
-            "User",
+            this,
+            login.getBase(),
             JOptionPane.PLAIN_MESSAGE);
     }
+    
     public void addFriend(String name){
       
         list.addElement(name);
         chats.put(name, "");
+    }
+    
+    private JPanel getPanel(){
+        JPanel panel = new JPanel();
+        
+        return panel;
     }
     
     
