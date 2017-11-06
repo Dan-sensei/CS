@@ -17,9 +17,10 @@ public class Login extends javax.swing.JFrame {
     /**
      * Creates new form Main
      */
-    int xMouse;
-    int yMouse;
-    
+    private int xMouse;
+    private int yMouse;
+    private String user;
+    private String pass;
     public Login() {
         initComponents();
         this.setLocationRelativeTo(null);
@@ -47,8 +48,8 @@ public class Login extends javax.swing.JFrame {
         jLabelClose = new javax.swing.JLabel();
         jLabelPassword = new javax.swing.JLabel();
         jLabelUser = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
-        jPasswordField1 = new javax.swing.JPasswordField();
+        Username = new javax.swing.JTextField();
+        Password = new javax.swing.JPasswordField();
         jLabelDrag = new javax.swing.JLabel();
         jLabelLogo = new javax.swing.JLabel();
         jLabelBackground = new javax.swing.JLabel();
@@ -68,6 +69,9 @@ public class Login extends javax.swing.JFrame {
             }
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 jLabelLoginMouseExited(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                jLabelLoginMouseReleased(evt);
             }
         });
         jPanel1.add(jLabelLogin, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 320, -1, -1));
@@ -122,19 +126,19 @@ public class Login extends javax.swing.JFrame {
         jLabelUser.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/User.png"))); // NOI18N
         jPanel1.add(jLabelUser, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 190, -1, -1));
 
-        jTextField1.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
-        jTextField1.setForeground(new java.awt.Color(255, 255, 255));
-        jTextField1.setBorder(null);
-        jTextField1.setCaretColor(new java.awt.Color(255, 255, 255));
-        jTextField1.setOpaque(false);
-        jPanel1.add(jTextField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 200, 250, 30));
+        Username.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        Username.setForeground(new java.awt.Color(255, 255, 255));
+        Username.setBorder(null);
+        Username.setCaretColor(new java.awt.Color(255, 255, 255));
+        Username.setOpaque(false);
+        jPanel1.add(Username, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 200, 250, 30));
 
-        jPasswordField1.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
-        jPasswordField1.setForeground(new java.awt.Color(255, 255, 255));
-        jPasswordField1.setBorder(null);
-        jPasswordField1.setCaretColor(new java.awt.Color(255, 255, 255));
-        jPasswordField1.setOpaque(false);
-        jPanel1.add(jPasswordField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 270, 250, 30));
+        Password.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        Password.setForeground(new java.awt.Color(255, 255, 255));
+        Password.setBorder(null);
+        Password.setCaretColor(new java.awt.Color(255, 255, 255));
+        Password.setOpaque(false);
+        jPanel1.add(Password, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 270, 250, 30));
 
         jLabelDrag.setBackground(new java.awt.Color(51, 51, 51));
         jLabelDrag.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
@@ -216,6 +220,13 @@ public class Login extends javax.swing.JFrame {
         jLabelLogin.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/Button_Login.png")));
     }//GEN-LAST:event_jLabelLoginMouseExited
 
+    private void jLabelLoginMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabelLoginMouseReleased
+       user=Username.getText();
+    }//GEN-LAST:event_jLabelLoginMouseReleased
+    
+    public String getUsername(){
+        return user;
+    }
     /**
      * @param args the command line arguments
      */
@@ -243,16 +254,18 @@ public class Login extends javax.swing.JFrame {
         }
         //</editor-fold>
         //</editor-fold>
-
-        /* Create and display the form */
+        new Login().setVisible(true);
+        /* Create and display the form 
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new Login().setVisible(true);
             }
-        });
+        });*/
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPasswordField Password;
+    private javax.swing.JTextField Username;
     private javax.swing.JLabel jLabelBackground;
     private javax.swing.JLabel jLabelClose;
     private javax.swing.JLabel jLabelDrag;
@@ -262,9 +275,7 @@ public class Login extends javax.swing.JFrame {
     private javax.swing.JLabel jLabelPassword;
     private javax.swing.JLabel jLabelUser;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPasswordField jPasswordField1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
-    private javax.swing.JTextField jTextField1;
     // End of variables declaration//GEN-END:variables
 }

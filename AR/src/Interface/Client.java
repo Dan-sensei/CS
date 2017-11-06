@@ -61,7 +61,7 @@ public class Client extends javax.swing.JFrame {
             public void actionPerformed(ActionEvent e){
                 outer.println(destination);
                 outer.println(Input.getText());
-                Screen.append(user+": "+Input.getText());
+                Screen.append(user+": "+Input.getText()+"\n");
                 chats.put(destination, Screen.getText());
                 //System.out.println("OUT "+Input.getText());
                 Input.setText("");
@@ -72,7 +72,6 @@ public class Client extends javax.swing.JFrame {
         //------------------------------------PUERTO Y SERVIDOR-----------------------------------------
         PORT=9001;
         server_name="localhost";
-        user="UserA";
     }
     
     public Image getIconImage(){
@@ -117,6 +116,8 @@ public class Client extends javax.swing.JFrame {
 
         jScrollPane2.setViewportView(jTextPaneSearch);
 
+        jScrollPane3.setBorder(null);
+
         friends.setBackground(new java.awt.Color(51, 51, 51));
         friends.setForeground(new java.awt.Color(255, 255, 255));
         friends.setModel(new DefaultListModel ());
@@ -148,7 +149,8 @@ public class Client extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(11, 11, 11)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 684, Short.MAX_VALUE))
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         Input.setBackground(new java.awt.Color(51, 51, 51));
@@ -283,14 +285,14 @@ public class Client extends javax.swing.JFrame {
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 1129, Short.MAX_VALUE)
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 782, Short.MAX_VALUE)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(Input, javax.swing.GroupLayout.DEFAULT_SIZE, 849, Short.MAX_VALUE)
+                            .addComponent(Input, javax.swing.GroupLayout.DEFAULT_SIZE, 495, Short.MAX_VALUE)
                             .addComponent(jScrollPane1)))
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addContainerGap()
@@ -306,7 +308,7 @@ public class Client extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addComponent(jScrollPane1)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 384, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(Input, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(6, 6, 6))
@@ -435,7 +437,7 @@ public class Client extends javax.swing.JFrame {
         }
     }
 
-    private void createAnsShowGui() {
+    public void Resizer() {
 
         ComponentResizer cr = new ComponentResizer();
         cr.setMinimumSize(new Dimension(300, 300));
@@ -471,12 +473,15 @@ public class Client extends javax.swing.JFrame {
         }
         //</editor-fold>
         //</editor-fold>
-        
+        /*
+        Login login = new Login();
+        login.setVisible(true);
+         */
         Client chat = new Client();
-        chat.setVisible(true);
-        chat.createAnsShowGui();
-        chat.handler();
         
+        chat.Resizer();
+        chat.handler();
+       
         /* Create and display the form 
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
@@ -487,7 +492,10 @@ public class Client extends javax.swing.JFrame {
         
     }
     
-    private void handler() throws IOException{
+    public void setUsername(String u){
+        user=u;
+    }
+    public void handler() throws IOException{
         
         SERVER=new Socket(server_name, PORT);
         getter = new BufferedReader(new InputStreamReader(SERVER.getInputStream()));
@@ -506,30 +514,32 @@ public class Client extends javax.swing.JFrame {
             } 
             else if (x.startsWith("NAMEACCEPTED")) {
                 user_name.setText(user);
+                setVisible(true);
             } 
             else if (x.startsWith("ADD")) {
                 //System.out.println("GET "+x.substring(4));
                 addFriend(x.substring(4));
             } 
             else if (x.startsWith("MESSAGE")) {
-                //System.out.println("GET "+x.substring(8));
+                System.out.println("GET "+x.substring(8));
                 split=x.split(" ");
-
-                if(split[1].equals(destination+ ": ")){
+                //System.out.println(split[1]+" ?= "+destination+":");
+                if(split[1].equals(destination+ ":")){
                     Screen.append(x.substring(8) + "\n");
                     chats.put(destination, Screen.getText());
                 }
                 else{
                     chats.put(split[1].split(":")[0], chats.get(split[1].split(":")[0])+x.substring(8)+"\n");
                 }
-                //System.out.println("Key: "+destination+" // Value: "+chats.get(destination));
+                System.out.println("Key: "+destination+" // Value: "+chats.get(destination));
             }
         }
     }
     
     private String getUserName() {
+        Login login = new Login();
         return JOptionPane.showInputDialog(
-            this,
+            login,
             "Nombre de usuario:",
             "User",
             JOptionPane.PLAIN_MESSAGE);
@@ -558,5 +568,4 @@ public class Client extends javax.swing.JFrame {
     private javax.swing.JTextPane jTextPaneSearch;
     private javax.swing.JLabel user_name;
     // End of variables declaration//GEN-END:variables
-    private DefaultListModel listModel;
 }

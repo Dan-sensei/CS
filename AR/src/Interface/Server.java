@@ -124,6 +124,7 @@ public class Server {
                 while (true) {
                     out.println("SUBMITNAME");
                     name = in.readLine();
+                    System.out.println(name);
                     //System.out.println(name);
                     if (name.equals("") ) {
                         return;
@@ -155,6 +156,7 @@ public class Server {
                 while (true) {
                     dest = in.readLine();
                     input=in.readLine();
+                    System.out.println(dest + " "+input);
                     if (dest==null || input == null) {
                         return;
                     }
