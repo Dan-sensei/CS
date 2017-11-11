@@ -19,6 +19,7 @@ import java.awt.GraphicsConfiguration;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -507,8 +508,14 @@ public class Client extends javax.swing.JFrame {
             x = getter.readLine();
             if (x.startsWith("SUBMITNAME")) {
                // user=getUserName();
-               
+                JFrame frame = new JFrame("My dialog asks....");
+                frame.setUndecorated( true );
+                frame.setVisible( true );
+                frame.setLocationRelativeTo( null );
+                frame.setIconImage(getIconImage());
                 Login login = new Login();
+                frame.dispose();
+                
                 user=login.getUsername();
                 
                 //System.out.println("In");

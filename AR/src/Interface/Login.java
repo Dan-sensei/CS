@@ -29,7 +29,6 @@ public class Login extends javax.swing.JDialog {
         setLocationRelativeTo(null);
         setModal(true);
         setVisible(true);
-        
     }
     
     public Image getIconImage(){
@@ -228,7 +227,7 @@ public class Login extends javax.swing.JDialog {
 
     private void jLabelLoginMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabelLoginMouseReleased
        user=Username.getText();
-       setVisible(false);
+       this.dispose();
     }//GEN-LAST:event_jLabelLoginMouseReleased
     
     public String getUsername(){
@@ -265,7 +264,10 @@ public class Login extends javax.swing.JDialog {
         }
         //</editor-fold>
         //</editor-fold>
-        new Login().setVisible(true);
+        Login log = new Login();
+        
+        log.setModalityType(ModalityType.TOOLKIT_MODAL);
+        log.setVisible(true);
         /* Create and display the form 
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
