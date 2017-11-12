@@ -26,6 +26,20 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.*;
 import java.util.HashMap;
+
+
+import java.security.*;
+import java.security.Key;
+import javax.crypto.KeyGenerator;
+import java.util.Base64;
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
+import java.security.SecureRandom;
+
+import java.util.Random;
+import java.security.spec.X509EncodedKeySpec;
 /**
  *
  * @author datri
@@ -41,38 +55,64 @@ public class Client extends javax.swing.JFrame {
     private String destination;
     
     private HashMap<String,String> chats;
+    private HashMap<String,String> claves;
     
     private int xMouse;
     private int yMouse;
     BufferedReader getter;
     PrintWriter outer;
+    KeyPair keys;
+    PublicKey RSA;
     
+    String initVector;
     public Client() {
+       
         initComponents();
         this.setLocationRelativeTo(null);
         this.getRootPane().setWindowDecorationStyle(JRootPane.FRAME);
         list = (DefaultListModel) friends.getModel();
         Input.setEditable(false);
-        
+      
         chats = new HashMap<String,String>();
+        claves = new HashMap<String, String>();
+        
         destination="none";
         
+        keys = generateKeyPair();
         Screen.setEditable(false);
         Input.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e){
-                outer.println(destination);
-                outer.println(Input.getText());
-                Screen.append(user+": "+Input.getText()+"\n");
-                chats.put(destination, Screen.getText());
-                //System.out.println("OUT "+Input.getText());
-                Input.setText("");
-                
+                if(!Input.getText().equals("")){
+                    outer.println("MESSAGE");
+                    outer.println(destination);
+                    outer.println(encryptAES( claves.get(destination), "8u87y6t5r4efghyt",Input.getText()));
+                    Screen.append(user+": "+Input.getText()+"\n");
+                    chats.put(destination, Screen.getText());
+                    //System.out.println("OUT "+Input.getText());
+                    Input.setText("");
+                }
             }
         
         });
         //------------------------------------PUERTO Y SERVIDOR-----------------------------------------
         PORT=9001;
         server_name="localhost";
+    }
+    private PublicKey getRSA(String rsa_key){
+    
+        PublicKey pubKey=null;
+        try{
+           System.out.println("RSA metodo get: "+rsa_key);
+            byte[] publicBytes = Base64.getDecoder().decode(rsa_key.getBytes());
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicBytes);
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            pubKey = keyFactory.generatePublic(keySpec);
+            System.out.println("Result "+pubKey);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        System.out.println("End getRSA()");
+        return pubKey;
     }
     
     public Image getIconImage(){
@@ -409,6 +449,13 @@ public class Client extends javax.swing.JFrame {
             Input.setEditable(true);
             Screen.setText(chats.get(destination));
             
+            if(claves.get(destination).equals("none")){
+                    
+                
+            outer.println("RSA_request");
+            outer.println(destination);
+
+            }
         }
     }//GEN-LAST:event_friendsValueChanged
     
@@ -507,7 +554,12 @@ public class Client extends javax.swing.JFrame {
         
         while(true){
             x = getter.readLine();
+            System.out.println("GET "+x);
+            
+            
+            
             if (x.startsWith("SUBMITNAME")) {
+                System.out.println("SUBMITNAME");
                // user=getUserName();
                 JFrame frame = new JFrame("My dialog asks....");
                 frame.setUndecorated( true );
@@ -526,26 +578,56 @@ public class Client extends javax.swing.JFrame {
                     outer.println(user);
             } 
             else if (x.startsWith("NAMEACCEPTED")) {
+                System.out.println("NAMEACCEPTED");
                 user_name.setText(user);
+                
+                outer.println("RSA_Register");
+                System.out.println("Original: "+keys.getPublic());
+                System.out.println("Encoded: "+Base64.getEncoder().encodeToString(keys.getPublic().getEncoded()));
+                outer.println(Base64.getEncoder().encodeToString(keys.getPublic().getEncoded()));
                 setVisible(true);
             } 
             else if (x.startsWith("ADD")) {
                 //System.out.println("GET "+x.substring(4));
                 addFriend(x.substring(4));
             } 
+            else if(x.startsWith("RSA_request")){
+                System.out.println("Request");
+                RSA = getRSA(x.substring(11));
+                System.out.println(RSA);
+                
+                String AES = "Bar12345Bar12345";
+                //AES = Base64.getEncoder().encodeToString(AES.getBytes());
+                claves.put(destination, AES);
+                System.out.println("< "+destination + " "+claves.get(destination)+" >");
+                outer.println("RSA_pull");
+                outer.println(destination);
+                outer.println(Base64.getEncoder().encodeToString(encryptRSA(AES, RSA)));
+                System.out.println("RSA Sended!");
+            }
+            else if (x.startsWith("RSA")){
+                String user = x.split(" ")[1];
+                String rsa_get =getter.readLine();
+                System.out.println("RSA > rsa_get "+rsa_get);
+                claves.put(user, decryptRSA(Base64.getDecoder().decode(rsa_get.getBytes()),keys.getPrivate()));
+            }    
             else if (x.startsWith("MESSAGE")) {
+                
                 System.out.println("GET "+x.substring(8));
                 split=x.split(" ");
+                System.out.println("< "+split[1].split(":")[0]+" "+claves.get(split[1].split(":")[0])+" >");
                 //System.out.println(split[1]+" ?= "+destination+":");
                 if(split[1].equals(destination+ ":")){
-                    Screen.append(x.substring(8) + "\n");
+                    Screen.append(x.substring(8));
+                    Screen.append(decryptAES(claves.get(split[1].split(":")[0]),"8u87y6t5r4efghyt",getter.readLine()) + "\n");
                     chats.put(destination, Screen.getText());
                 }
                 else{
-                    chats.put(split[1].split(":")[0], chats.get(split[1].split(":")[0])+x.substring(8)+"\n");
+                    chats.put(split[1].split(":")[0], chats.get(split[1].split(":")[0])+x.substring(8)+decryptAES(claves.get(split[1].split(":")[0]),"8u87y6t5r4efghyt",getter.readLine())+"\n");
                 }
                 System.out.println("Key: "+destination+" // Value: "+chats.get(destination));
             }
+            
         }
     }
     
@@ -564,6 +646,10 @@ public class Client extends javax.swing.JFrame {
       
         list.addElement(name);
         chats.put(name, "");
+        claves.put(name, "none");
+        System.out.println("RSA Send");
+                    
+        
     }
     
     private JPanel getPanel(){
@@ -571,7 +657,104 @@ public class Client extends javax.swing.JFrame {
         
         return panel;
     }
+    ////////////////////////ENCRIPTACION///////////////////////////////////
     
+    // ENCRIPTAR CON CLAVE AES
+    public static String encryptAES(String key, String initVector, String mensaje) {
+
+    	try {
+            IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
+            SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
+
+            Cipher encriptador = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+            encriptador.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
+
+            byte[] cifrado = encriptador.doFinal(mensaje.getBytes());
+
+            return Base64.getEncoder().encodeToString(cifrado);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return null;
+    }
+    
+	// DESENCRIPTAR CON CLAVE AES
+    public static String decryptAES(String key, String initVector, String cifrado) {
+        try {
+            IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
+            SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
+
+            Cipher encriptador = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+            encriptador.init(Cipher.DECRYPT_MODE, skeySpec, iv);
+
+            byte[] mensaje = encriptador.doFinal(Base64.getDecoder().decode(cifrado));
+
+            return new String(mensaje);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        return null;
+    }
+        
+    public static String generateAESKey(){
+        String AESkey = null;
+        try{
+            
+            Key key;
+            SecureRandom rand = new SecureRandom();
+            KeyGenerator generator = KeyGenerator.getInstance("AES");
+            generator.init(256, rand);
+            key = generator.generateKey();
+            AESkey=key.toString();
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return AESkey;
+    }
+    
+    // GENERAR PAR DE CLAVES (PUBLICA Y PRIVADA)
+    public static KeyPair generateKeyPair(){
+        
+        KeyPair keyPair = null;
+        try {
+            
+            KeyPairGenerator rsaKeyGen = KeyPairGenerator.getInstance("RSA");
+            rsaKeyGen.initialize(1024);
+            keyPair = rsaKeyGen.generateKeyPair();
+            //PublicKey publicKey = keyPair.getPublic();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return keyPair;
+    }
+
+    // ENCRIPTAR CON RSA PUBLICA
+    public static byte[] encryptRSA(String mensaje, PublicKey key){
+        byte[] cifrado = null;
+        try {
+            Cipher encriptador = Cipher.getInstance("RSA");
+            encriptador.init(Cipher.ENCRYPT_MODE, key);
+            cifrado = encriptador.doFinal(mensaje.getBytes());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return cifrado;
+    }
+
+    // DESENCRIPTAR CON RSA PRIVADA
+    public static String decryptRSA(byte[] cifrado, PrivateKey key){
+        byte[] mensaje = null;
+        try {
+            Cipher encriptador = Cipher.getInstance("RSA");
+            encriptador.init(Cipher.DECRYPT_MODE, key);
+            mensaje = encriptador.doFinal(cifrado);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new String(mensaje);
+    }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField Input;

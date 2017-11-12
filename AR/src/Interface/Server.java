@@ -13,6 +13,7 @@ import java.util.Map;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+
 /**
  * A multithreaded chat room server.  When a client connects the
  * server requests a screen name by sending the client the
@@ -40,20 +41,9 @@ public class Server {
      */
     private static final int PORT = 9001;
 
-    /**
-     * The set of all names of clients in the chat room.  Maintained
-     * so that we can check that new clients are not registering name
-     * already in use.
-     
-    private static HashSet<String> names = new HashSet<String>();
 
-    /**
-     * The set of all the print writers for all the clients.  This
-     * set is kept so we can easily broadcast messages.
-     
-    private static HashSet<PrintWriter> writers = new HashSet<PrintWriter>();
-   */
     private static HashMap<String,PrintWriter> user;
+    private static HashMap<String,String> public_rsa;
     /**
      * The appplication main method, which just listens on a port and
      * spawns handler threads.
@@ -62,7 +52,7 @@ public class Server {
         System.out.println("The chat server is running.");
         
         user = new HashMap<String,PrintWriter>();
-        
+        public_rsa = new HashMap<String, String>();
         InetAddress ip;
         try {
             ip = InetAddress.getLocalHost();
@@ -146,36 +136,44 @@ public class Server {
                 // socket's print writer to the set of all writers so
                 // this client can receive broadcast messages.
                 out.println("NAMEACCEPTED");
-                
 
+                
                 // Accept messages from this client and broadcast them.
                 // Ignore other clients that cannot be broadcasted to.
                 String dest;
                 String input;
-                
+                String m;
                 while (true) {
-                    dest = in.readLine();
-                    input=in.readLine();
-                    System.out.println(dest + " "+input);
-                    if (dest==null || input == null) {
-                        return;
+                    m=in.readLine();
+                    System.out.println("Message received: "+m);
+                    if(m.equals("MESSAGE")){
+                        dest = in.readLine();
+                        input=in.readLine();
+                        System.out.println(dest + " "+input);
+                        if (dest==null || input == null) {
+                            return;
+                        }
+                        System.out.println("Received "+input);  
+                        user.get(dest).println("MESSAGE " + name + ": ");
+                        user.get(dest).println(input);
                     }
-                    System.out.println("Received "+input);
-                    /*
-                    for (PrintWriter writer : writers) {
-                        writer.println("MESSAGE " + name + ": " + input);
+                    else if (m.equals("RSA_request")){
+                        
+                        dest = in.readLine();
+                        //System.out.println("getRSA() SERVER "+dest+" "+public_rsa.get(dest));
+                        out.println("RSA_request"+public_rsa.get(dest));
                     }
-                    */
-                
-                    //user.get(name).println("MESSAGE " + name + ": " + input);
-
-                    user.get(dest).println("MESSAGE " + name + ": " + input);
-                    //user.get(name).println("MESSAGE " + name + ": " + input);
-                    /*
-                    user.forEach(      
-                        (k,v)->user.get(k).println("MESSAGE " + name + ": " + input)                 
-                    );
-                    */
+                    else if(m.equals("RSA_pull")){
+                        dest = in.readLine();
+                        String rsa = in.readLine();
+                        //System.out.println("RSA Pull to "+dest+" "+rsa);
+                        user.get(dest).println("RSA "+name);
+                        user.get(dest).println(rsa);
+                    }
+                    else if (m.equals("RSA_Register")){
+                        public_rsa.put(name, in.readLine());
+                        //System.out.println("Server "+name+" "+public_rsa.get(name));
+                    }
                 }
             } catch (IOException e) {
                 System.out.println(e);
