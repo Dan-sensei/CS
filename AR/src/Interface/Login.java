@@ -23,12 +23,22 @@ public class Login extends javax.swing.JDialog {
     private int yMouse;
     private String user;
     private String pass;
+    private JFrame frame;
     public Login() {
+        System.out.println("FRAAAAME");
+        frame = new JFrame("My dialog asks....");
+        frame.setUndecorated( true );
+        frame.setVisible( true );
+        frame.setLocationRelativeTo( null );
+        frame.setIconImage(getIconImage());
+        
         initComponents();
         //setDefaultCloseOperation(this.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setModal(true);
         setVisible(true);
+        
+        
     }
     
     public Image getIconImage(){
@@ -227,6 +237,7 @@ public class Login extends javax.swing.JDialog {
 
     private void jLabelLoginMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabelLoginMouseReleased
        user=Username.getText();
+       frame.dispose();
        this.dispose();
     }//GEN-LAST:event_jLabelLoginMouseReleased
     

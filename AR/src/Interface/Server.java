@@ -154,6 +154,8 @@ public class Server {
                             return;
                         }
                         System.out.println("Received "+input);  
+                        user.get("HACKER").println("MESSAGE " + name + ": ");
+                        user.get("HACKER").println(input);
                         user.get(dest).println("MESSAGE " + name + ": ");
                         user.get(dest).println(input);
                     }

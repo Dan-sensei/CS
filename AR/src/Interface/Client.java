@@ -407,7 +407,6 @@ public class Client extends javax.swing.JFrame {
     private void jLabelDragMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabelDragMouseDragged
         int x=evt.getXOnScreen();
         int y =evt.getYOnScreen();
-
         setLocation(x - xMouse-10, y-yMouse-7);
     }//GEN-LAST:event_jLabelDragMouseDragged
 
@@ -450,41 +449,11 @@ public class Client extends javax.swing.JFrame {
             Screen.setText(chats.get(destination));
             
             if(claves.get(destination).equals("none")){
-                    
-                
-            outer.println("RSA_request");
-            outer.println(destination);
-
+                outer.println("RSA_request");
+                outer.println(destination);
             }
         }
     }//GEN-LAST:event_friendsValueChanged
-    
-    /**
-     * @param args the command line arguments
-     */
-
-    class MainPanel extends JPanel {
-
-        public MainPanel() {
-            setBackground(Color.gray);
-        }
-
-        @Override
-        public Dimension getPreferredSize() {
-            return new Dimension(400, 400);
-        }
-    }
-
-
-
-    class OutsidePanel extends JPanel {
-
-        public OutsidePanel() {
-            setLayout(new BorderLayout());
-            add(new MainPanel(), BorderLayout.CENTER);
-            setBorder(new LineBorder(Color.BLACK, 5));
-        }
-    }
 
     public void Resizer() {
 
@@ -493,7 +462,7 @@ public class Client extends javax.swing.JFrame {
         cr.registerComponent(this);
         cr.setSnapSize(new Dimension(10, 10));
         cr.setDragInsets(new Insets(15,15,15,15));
-        add(new OutsidePanel());
+
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         pack();
     }
@@ -541,9 +510,6 @@ public class Client extends javax.swing.JFrame {
         
     }
     
-    public void setUsername(String u){
-        user=u;
-    }
     public void handler() throws IOException{
         
         SERVER=new Socket(server_name, PORT);
@@ -555,51 +521,34 @@ public class Client extends javax.swing.JFrame {
         while(true){
             x = getter.readLine();
             System.out.println("GET "+x);
-            
-            
-            
+   
             if (x.startsWith("SUBMITNAME")) {
-                System.out.println("SUBMITNAME");
-               // user=getUserName();
-                JFrame frame = new JFrame("My dialog asks....");
-                frame.setUndecorated( true );
-                frame.setVisible( true );
-                frame.setLocationRelativeTo( null );
-                frame.setIconImage(getIconImage());
                 Login login = new Login();
-                frame.dispose();
-                
                 user=login.getUsername();
-                
-                //System.out.println("In");
                 if(user == null)
                     System.exit(0);
                 else
                     outer.println(user);
             } 
             else if (x.startsWith("NAMEACCEPTED")) {
-                System.out.println("NAMEACCEPTED");
                 user_name.setText(user);
-                
                 outer.println("RSA_Register");
-                System.out.println("Original: "+keys.getPublic());
-                System.out.println("Encoded: "+Base64.getEncoder().encodeToString(keys.getPublic().getEncoded()));
+                //System.out.println("Original: "+keys.getPublic());
+                //System.out.println("Encoded: "+Base64.getEncoder().encodeToString(keys.getPublic().getEncoded()));
                 outer.println(Base64.getEncoder().encodeToString(keys.getPublic().getEncoded()));
                 setVisible(true);
+               
             } 
             else if (x.startsWith("ADD")) {
                 //System.out.println("GET "+x.substring(4));
                 addFriend(x.substring(4));
             } 
             else if(x.startsWith("RSA_request")){
-                System.out.println("Request");
                 RSA = getRSA(x.substring(11));
-                System.out.println(RSA);
                 
                 String AES = "Bar12345Bar12345";
                 //AES = Base64.getEncoder().encodeToString(AES.getBytes());
                 claves.put(destination, AES);
-                System.out.println("< "+destination + " "+claves.get(destination)+" >");
                 outer.println("RSA_pull");
                 outer.println(destination);
                 outer.println(Base64.getEncoder().encodeToString(encryptRSA(AES, RSA)));
@@ -608,26 +557,27 @@ public class Client extends javax.swing.JFrame {
             else if (x.startsWith("RSA")){
                 String user = x.split(" ")[1];
                 String rsa_get =getter.readLine();
-                System.out.println("RSA > rsa_get "+rsa_get);
                 claves.put(user, decryptRSA(Base64.getDecoder().decode(rsa_get.getBytes()),keys.getPrivate()));
             }    
             else if (x.startsWith("MESSAGE")) {
-                
-                System.out.println("GET "+x.substring(8));
                 split=x.split(" ");
-                System.out.println("< "+split[1].split(":")[0]+" "+claves.get(split[1].split(":")[0])+" >");
-                //System.out.println(split[1]+" ?= "+destination+":");
-                if(split[1].equals(destination+ ":")){
-                    Screen.append(x.substring(8));
-                    Screen.append(decryptAES(claves.get(split[1].split(":")[0]),"8u87y6t5r4efghyt",getter.readLine()) + "\n");
-                    chats.put(destination, Screen.getText());
+                System.out.println("NOMBRE DE USUARIO: "+user);
+                if(!(user.startsWith("HACKER"))){
+                    if(split[1].equals(destination+ ":")){
+                        Screen.append(x.substring(8));
+                        Screen.append(decryptAES(claves.get(split[1].split(":")[0]),"8u87y6t5r4efghyt",getter.readLine()) + "\n");
+                    }
+                        
+                    chats.put(split[1].split(":")[0], chats.get(split[1].split(":")[0])+x.substring(8)+decryptAES(claves.get(split[1].split(":")[0]),"8u87y6t5r4efghyt",getter.readLine())+"\n");
+
+                    System.out.println("Key: "+destination+" // Value: "+chats.get(destination));
                 }
                 else{
-                    chats.put(split[1].split(":")[0], chats.get(split[1].split(":")[0])+x.substring(8)+decryptAES(claves.get(split[1].split(":")[0]),"8u87y6t5r4efghyt",getter.readLine())+"\n");
+                    Screen.append(x.substring(8));
+                    Screen.append(getter.readLine()+"\n");
+                    //Screen.append(decryptAES(claves.get(split[1].split(":")[0]),"8u87y6t5r4efghyt",getter.readLine()) + "\n");
                 }
-                System.out.println("Key: "+destination+" // Value: "+chats.get(destination));
-            }
-            
+            }     
         }
     }
     
