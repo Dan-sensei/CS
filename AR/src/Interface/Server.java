@@ -102,25 +102,15 @@ public class Server {
         public void run() {
             try {
 
-                // Create character streams for the socket.
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 out = new PrintWriter(socket.getOutputStream(), true);
 
-                
-                // Request a name from this client.  Keep requesting until
-                // a name is submitted that is not already used.  Note that
-                // checking for the existence of a name and adding the name
-                // must be done while locking the set of names.
                 while (true) {
                     out.println("SUBMITNAME");
                     name = in.readLine();
                     System.out.println(name);
-                    //System.out.println(name);
-                    if (name.equals("") ) {
-                        return;
-                    }
-                    //synchronized se asegura de que solo haya un único usuario accediendo
-                    //a la variable estática user, mantiene a los nuevos en espera
+                    if (name.equals("") )
+                        return;       
                     synchronized (user) {
                         if (!user.containsKey(name)) {
                             user.put(name, out);
@@ -131,21 +121,70 @@ public class Server {
                         }
                     }
                 }
-               
-                // Now that a successful name has been chosen, add the
-                // socket's print writer to the set of all writers so
-                // this client can receive broadcast messages.
-                out.println("NAMEACCEPTED");
 
-                
-                // Accept messages from this client and broadcast them.
-                // Ignore other clients that cannot be broadcasted to.
+                out.println("NAMEACCEPTED");
                 String dest;
                 String input;
                 String m;
                 while (true) {
                     m=in.readLine();
+                    dest = in.readLine();
                     System.out.println("Message received: "+m);
+                    System.out.println("Dest: "+dest);
+                    switch (m){
+                        case "MESSAGE":         input=in.readLine();
+                                                System.out.println("Input: "+input);
+                                                /*
+                                                user.get("HACKER").println("MESSAGE");
+                                                user.get("HACKER").println(name + ": ");
+                                                user.get("HACKER").println(input);
+                                                */
+                                                user.get(dest).println("MESSAGE");
+                                                user.get(dest).println(name + ":");
+                                                user.get(dest).println(input);
+                                                break;
+                                            
+                        case "RSA_Request":     System.out.println("RSA_Request"+public_rsa.get(dest));
+                                                out.println("RSA_Request");
+                                                out.println(public_rsa.get(dest));
+                                                break;
+                                            
+                        case "RSA_Push":        String rsa = in.readLine();
+                                                System.out.println("RSA Push to "+dest+" "+rsa);
+                                                user.get(dest).println("RSA");
+                                                user.get(dest).println(name);
+                                                user.get(dest).println(rsa);
+                                                break;     
+                                            
+                        case "RSA_Register":    public_rsa.put(name, dest);
+                                                break;
+                    }
+                }
+            } catch (IOException e) {
+                System.out.println(e);
+            } finally {
+                if (user != null) {
+                    user.remove(name);
+                }
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+        
+        private void refresh(String k){
+            if(k!=name){
+                user.get(name).println("ADD");
+                user.get(name).println(k);
+                user.get(k).println("ADD");
+                user.get(k).println(name);
+            }
+        }
+    }
+}
+
+                    /*
                     if(m.equals("MESSAGE")){
                         dest = in.readLine();
                         input=in.readLine();
@@ -160,15 +199,14 @@ public class Server {
                         user.get(dest).println(input);
                     }
                     else if (m.equals("RSA_request")){
-                        
                         dest = in.readLine();
                         //System.out.println("getRSA() SERVER "+dest+" "+public_rsa.get(dest));
                         out.println("RSA_request"+public_rsa.get(dest));
                     }
-                    else if(m.equals("RSA_pull")){
+                    else if(m.equals("RSA_push")){
                         dest = in.readLine();
                         String rsa = in.readLine();
-                        //System.out.println("RSA Pull to "+dest+" "+rsa);
+                        //System.out.println("RSA Push to "+dest+" "+rsa);
                         user.get(dest).println("RSA "+name);
                         user.get(dest).println(rsa);
                     }
@@ -176,27 +214,4 @@ public class Server {
                         public_rsa.put(name, in.readLine());
                         //System.out.println("Server "+name+" "+public_rsa.get(name));
                     }
-                }
-            } catch (IOException e) {
-                System.out.println(e);
-            } finally {
-                // This client is going down!  Remove its name and its print
-                // writer from the sets, and close its socket.
-                if (user != null) {
-                    user.remove(name);
-                }
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                }
-            }
-        }
-        
-        private void refresh(String k){
-            if(k!=name){
-                user.get(name).println("ADD "+k);
-                user.get(k).println("ADD "+name);
-            }
-        }
-    }
-}
+                    */

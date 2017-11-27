@@ -50,7 +50,7 @@ public class Client extends javax.swing.JFrame {
     private String server_name;
     Socket SERVER;
     
-    private String user;
+    private String user="";
     private DefaultListModel list;
     private String destination;
     
@@ -66,7 +66,7 @@ public class Client extends javax.swing.JFrame {
     
     String initVector;
     public Client() {
-       
+        
         initComponents();
         this.setLocationRelativeTo(null);
         this.getRootPane().setWindowDecorationStyle(JRootPane.FRAME);
@@ -85,7 +85,7 @@ public class Client extends javax.swing.JFrame {
                 if(!Input.getText().equals("")){
                     outer.println("MESSAGE");
                     outer.println(destination);
-                    outer.println(encryptAES( claves.get(destination), "8u87y6t5r4efghyt",Input.getText()));
+                    outer.println(encryptAES(claves.get(destination), "8u87y6t5r4efghyt",Input.getText()));
                     Screen.append(user+": "+Input.getText()+"\n");
                     chats.put(destination, Screen.getText());
                     //System.out.println("OUT "+Input.getText());
@@ -447,9 +447,10 @@ public class Client extends javax.swing.JFrame {
             destination=friends.getSelectedValue();
             Input.setEditable(true);
             Screen.setText(chats.get(destination));
-            
+
             if(claves.get(destination).equals("none")){
-                outer.println("RSA_request");
+                System.out.println("RSA_Request");
+                outer.println("RSA_Request");
                 outer.println(destination);
             }
         }
@@ -517,11 +518,61 @@ public class Client extends javax.swing.JFrame {
         outer = new PrintWriter(SERVER.getOutputStream(),true);
         String x;
         String split[];
-        
+        String d;
+        String m;
         while(true){
             x = getter.readLine();
             System.out.println("GET "+x);
-   
+            
+            switch(x){
+                case "SUBMITNAME":      Login login = new Login();
+                                        user=login.getUsername();
+                                        if(user == null)
+                                            System.exit(0);
+                                        else
+                                            outer.println(user);
+                                        break;
+                                        
+                case "NAMEACCEPTED":    user_name.setText(user);
+                                        outer.println("RSA_Register");
+                                        outer.println(Base64.getEncoder().encodeToString(keys.getPublic().getEncoded()));
+                                        setVisible(true);
+                                        break;
+                                        
+                case "ADD":             addFriend(getter.readLine());
+                                        break;
+                                        
+                case "RSA_Request":     RSA = getRSA(getter.readLine());
+                                        String AES = "Bar12345Bar12345";
+                                        claves.put(destination, AES);
+                                        outer.println("RSA_Push");
+                                        outer.println(destination);
+                                        outer.println(Base64.getEncoder().encodeToString(encryptRSA(AES, RSA)));
+                                        break;
+                                        
+                case "RSA":             String u = getter.readLine();
+                                        String rsa_get =getter.readLine();
+                                        claves.put(u, decryptRSA(Base64.getDecoder().decode(rsa_get.getBytes()),keys.getPrivate()));
+                                        break;
+                
+                case "MESSAGE":         d = getter.readLine();
+                                        if(!(user.startsWith("HACKER"))){
+                                            m = getter.readLine();
+                                            if(d.equals(destination+ ":")){
+                                                Screen.append(d);
+                                                Screen.append(decryptAES(claves.get(d.split(":")[0]),"8u87y6t5r4efghyt",m) + "\n");                        
+                                            }
+                                            chats.put(d.split(":")[0], chats.get(d.split(":")[0])+d+decryptAES(claves.get(d.split(":")[0]),"8u87y6t5r4efghyt",m)+"\n");
+                                            
+                                        }
+                                        else{
+                                            Screen.append(x.substring(8));
+                                            Screen.append(getter.readLine()+"\n");
+                                        }
+                                        break;
+                
+            }
+            /*
             if (x.startsWith("SUBMITNAME")) {
                 Login login = new Login();
                 user=login.getUsername();
@@ -543,23 +594,23 @@ public class Client extends javax.swing.JFrame {
                 //System.out.println("GET "+x.substring(4));
                 addFriend(x.substring(4));
             } 
-            else if(x.startsWith("RSA_request")){
+            else if(x.startsWith("RSA_Request")){
                 RSA = getRSA(x.substring(11));
                 
                 String AES = "Bar12345Bar12345";
                 //AES = Base64.getEncoder().encodeToString(AES.getBytes());
                 claves.put(destination, AES);
-                outer.println("RSA_pull");
+                outer.println("RSA_Push");
                 outer.println(destination);
                 outer.println(Base64.getEncoder().encodeToString(encryptRSA(AES, RSA)));
                 System.out.println("RSA Sended!");
             }
             else if (x.startsWith("RSA")){
-                String user = x.split(" ")[1];
+                String u = x.split(" ")[1];
                 String rsa_get =getter.readLine();
-                claves.put(user, decryptRSA(Base64.getDecoder().decode(rsa_get.getBytes()),keys.getPrivate()));
+                claves.put(u, decryptRSA(Base64.getDecoder().decode(rsa_get.getBytes()),keys.getPrivate()));
             }    
-            else if (x.startsWith("MESSAGE")) {
+            else if (x.equals("MESSAGE")) {
                 split=x.split(" ");
                 System.out.println("NOMBRE DE USUARIO: "+user);
                 if(!(user.startsWith("HACKER"))){
@@ -578,6 +629,7 @@ public class Client extends javax.swing.JFrame {
                     //Screen.append(decryptAES(claves.get(split[1].split(":")[0]),"8u87y6t5r4efghyt",getter.readLine()) + "\n");
                 }
             }     
+*/
         }
     }
     
@@ -593,7 +645,7 @@ public class Client extends javax.swing.JFrame {
     }
     
     public void addFriend(String name){
-      
+        System.out.println("AddFriend "+name);
         list.addElement(name);
         chats.put(name, "");
         claves.put(name, "none");
