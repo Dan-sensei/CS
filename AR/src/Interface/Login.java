@@ -7,9 +7,17 @@ package Interface;
 
 import java.awt.*;
 import javax.swing.*;
+
 import javax.swing.JFrame;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 /**
  *
  * @author datri
@@ -24,7 +32,9 @@ public class Login extends javax.swing.JDialog {
     private String user;
     private String pass;
     private JFrame frame;
-    public Login() {
+
+    
+    public Login(boolean error) {
         System.out.println("FRAAAAME");
         frame = new JFrame("My dialog asks....");
         frame.setUndecorated( true );
@@ -33,11 +43,22 @@ public class Login extends javax.swing.JDialog {
         frame.setIconImage(getIconImage());
         
         initComponents();
+        ERROR.setVisible(error);
         //setDefaultCloseOperation(this.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setModal(true);
         setVisible(true);
         
+        Username.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent e){
+                erase();
+            }
+        });
+        Password.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent e){
+                erase();
+            }
+        });
         
     }
     
@@ -56,65 +77,45 @@ public class Login extends javax.swing.JDialog {
     private void initComponents() {
 
         Base = new javax.swing.JPanel();
-        jLabelLogin = new javax.swing.JLabel();
+        LOGIN = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
         jSeparator2 = new javax.swing.JSeparator();
-        jLabelMinimize = new javax.swing.JLabel();
         jLabelClose = new javax.swing.JLabel();
         jLabelPassword = new javax.swing.JLabel();
         jLabelUser = new javax.swing.JLabel();
         Username = new javax.swing.JTextField();
         Password = new javax.swing.JPasswordField();
+        ERROR = new javax.swing.JLabel();
         jLabelDrag = new javax.swing.JLabel();
         jLabelLogo = new javax.swing.JLabel();
         jLabelBackground = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setIconImage(getIconImage());
         setUndecorated(true);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         Base.setBackground(new java.awt.Color(51, 51, 51));
         Base.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jLabelLogin.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/Button_Login.png"))); // NOI18N
-        jLabelLogin.addMouseListener(new java.awt.event.MouseAdapter() {
+        LOGIN.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/Button_Login.png"))); // NOI18N
+        LOGIN.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                jLabelLoginMouseEntered(evt);
+                LOGINMouseEntered(evt);
             }
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                jLabelLoginMouseExited(evt);
+                LOGINMouseExited(evt);
             }
             public void mouseReleased(java.awt.event.MouseEvent evt) {
-                jLabelLoginMouseReleased(evt);
+                LOGINMouseReleased(evt);
             }
         });
-        Base.add(jLabelLogin, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 320, -1, -1));
+        Base.add(LOGIN, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 320, -1, -1));
 
         jSeparator1.setBackground(new java.awt.Color(166, 166, 166));
         Base.add(jSeparator1, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 300, 250, 10));
 
         jSeparator2.setBackground(new java.awt.Color(166, 166, 166));
         Base.add(jSeparator2, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 230, 250, 10));
-
-        jLabelMinimize.setBackground(new java.awt.Color(51, 51, 51));
-        jLabelMinimize.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        jLabelMinimize.setForeground(new java.awt.Color(204, 204, 204));
-        jLabelMinimize.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabelMinimize.setText("–");
-        jLabelMinimize.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        jLabelMinimize.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jLabelMinimizeMouseClicked(evt);
-            }
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                jLabelMinimizeMouseEntered(evt);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                jLabelMinimizeMouseExited(evt);
-            }
-        });
-        Base.add(jLabelMinimize, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 0, 40, 30));
 
         jLabelClose.setBackground(new java.awt.Color(51, 51, 51));
         jLabelClose.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
@@ -155,6 +156,11 @@ public class Login extends javax.swing.JDialog {
         Password.setOpaque(false);
         Base.add(Password, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 270, 250, 30));
 
+        ERROR.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        ERROR.setForeground(new java.awt.Color(255, 0, 51));
+        ERROR.setText("Datos incorrectos");
+        Base.add(ERROR, new org.netbeans.lib.awtextra.AbsoluteConstraints(330, 330, 100, 20));
+
         jLabelDrag.setBackground(new java.awt.Color(51, 51, 51));
         jLabelDrag.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         jLabelDrag.setForeground(new java.awt.Color(204, 204, 204));
@@ -182,20 +188,6 @@ public class Login extends javax.swing.JDialog {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
-    private void jLabelMinimizeMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabelMinimizeMouseClicked
-        //this.setState(this.ICONIFIED);
-    }//GEN-LAST:event_jLabelMinimizeMouseClicked
-
-    private void jLabelMinimizeMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabelMinimizeMouseEntered
-        jLabelMinimize.setBackground(new java.awt.Color(90, 90, 90));
-        jLabelMinimize.setForeground(new java.awt.Color(163, 73, 255));
-    }//GEN-LAST:event_jLabelMinimizeMouseEntered
-
-    private void jLabelMinimizeMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabelMinimizeMouseExited
-        jLabelMinimize.setBackground(new java.awt.Color(51, 51, 51));
-        jLabelMinimize.setForeground(new java.awt.Color(204, 204, 204));
-    }//GEN-LAST:event_jLabelMinimizeMouseExited
 
     private void jLabelCloseMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabelCloseMouseClicked
         System.exit(0);
@@ -227,76 +219,49 @@ public class Login extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_jLabelDragMousePressed
 
-    private void jLabelLoginMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabelLoginMouseEntered
-        jLabelLogin.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/Button_Login2.png")));
-    }//GEN-LAST:event_jLabelLoginMouseEntered
+    private void LOGINMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_LOGINMouseEntered
+        LOGIN.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/Button_Login2.png")));
+    }//GEN-LAST:event_LOGINMouseEntered
 
-    private void jLabelLoginMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabelLoginMouseExited
-        jLabelLogin.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/Button_Login.png")));
-    }//GEN-LAST:event_jLabelLoginMouseExited
+    private void LOGINMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_LOGINMouseExited
+        LOGIN.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/Button_Login.png")));
+    }//GEN-LAST:event_LOGINMouseExited
 
-    private void jLabelLoginMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabelLoginMouseReleased
-       user=Username.getText();
-       frame.dispose();
-       this.dispose();
-    }//GEN-LAST:event_jLabelLoginMouseReleased
+    private void LOGINMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_LOGINMouseReleased
+        erase();
+    }//GEN-LAST:event_LOGINMouseReleased
     
     public String getUsername(){
         return user;
     }
     
-    public JPanel getBase(){
-        return Base;
+    public String getPass(){
+        return pass;
+    }
+    
+    private void erase(){
+        user=Username.getText();
+        pass= new String(Password.getPassword());
+        frame.dispose();
+        this.dispose();
     }
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Windows".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(Login.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(Login.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(Login.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(Login.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-        //</editor-fold>
-        Login log = new Login();
-        
-        log.setModalityType(ModalityType.TOOLKIT_MODAL);
-        log.setVisible(true);
-        /* Create and display the form 
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new Login().setVisible(true);
-            }
-        });*/
-    }
+
+    
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel Base;
+    private javax.swing.JLabel ERROR;
+    private javax.swing.JLabel LOGIN;
     private javax.swing.JPasswordField Password;
     private javax.swing.JTextField Username;
     private javax.swing.JLabel jLabelBackground;
     private javax.swing.JLabel jLabelClose;
     private javax.swing.JLabel jLabelDrag;
-    private javax.swing.JLabel jLabelLogin;
     private javax.swing.JLabel jLabelLogo;
-    private javax.swing.JLabel jLabelMinimize;
     private javax.swing.JLabel jLabelPassword;
     private javax.swing.JLabel jLabelUser;
     private javax.swing.JSeparator jSeparator1;

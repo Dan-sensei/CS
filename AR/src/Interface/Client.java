@@ -19,7 +19,6 @@ import java.awt.GraphicsConfiguration;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -37,9 +36,11 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import java.security.SecureRandom;
-
-import java.util.Random;
 import java.security.spec.X509EncodedKeySpec;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 /**
  *
  * @author datri
@@ -63,6 +64,7 @@ public class Client extends javax.swing.JFrame {
     PrintWriter outer;
     KeyPair keys;
     PublicKey RSA;
+    PublicKey ServerRSA;
     
     String initVector;
     public Client() {
@@ -97,22 +99,6 @@ public class Client extends javax.swing.JFrame {
         //------------------------------------PUERTO Y SERVIDOR-----------------------------------------
         PORT=9001;
         server_name="localhost";
-    }
-    private PublicKey getRSA(String rsa_key){
-    
-        PublicKey pubKey=null;
-        try{
-           System.out.println("RSA metodo get: "+rsa_key);
-            byte[] publicBytes = Base64.getDecoder().decode(rsa_key.getBytes());
-            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicBytes);
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            pubKey = keyFactory.generatePublic(keySpec);
-            System.out.println("Result "+pubKey);
-        }catch(Exception e){
-            e.printStackTrace();
-        }
-        System.out.println("End getRSA()");
-        return pubKey;
     }
     
     public Image getIconImage(){
@@ -513,11 +499,12 @@ public class Client extends javax.swing.JFrame {
     
     public void handler() throws IOException{
         
-        SERVER=new Socket(server_name, PORT);
+        SERVER = new Socket(server_name, PORT);
         getter = new BufferedReader(new InputStreamReader(SERVER.getInputStream()));
         outer = new PrintWriter(SERVER.getOutputStream(),true);
+        String pass = null;
+        boolean error = false;
         String x;
-        String split[];
         String d;
         String m;
         while(true){
@@ -525,12 +512,18 @@ public class Client extends javax.swing.JFrame {
             System.out.println("GET "+x);
             
             switch(x){
-                case "SUBMITNAME":      Login login = new Login();
+                case "SUBMITNAME":      ServerRSA = getRSA(getter.readLine());  //Cogemos la RSA del servidor
+                                        Login login = new Login(error);
                                         user=login.getUsername();
+                                        pass=login.getPass();
+                                        System.out.println(user+" "+pass);
                                         if(user == null)
                                             System.exit(0);
-                                        else
-                                            outer.println(user);
+                                        else{
+                                            outer.println(Base64.getEncoder().encodeToString(encryptRSA(user,ServerRSA)));
+                                            outer.println(Base64.getEncoder().encodeToString(encryptRSA(encodeHash(pass),ServerRSA)));
+                                        }
+                                        error=true;
                                         break;
                                         
                 case "NAMEACCEPTED":    user_name.setText(user);
@@ -543,105 +536,28 @@ public class Client extends javax.swing.JFrame {
                                         break;
                                         
                 case "RSA_Request":     RSA = getRSA(getter.readLine());
-                                        String AES = "Bar12345Bar12345";
+                                        String AES = generateAESKey();
                                         claves.put(destination, AES);
                                         outer.println("RSA_Push");
                                         outer.println(destination);
                                         outer.println(Base64.getEncoder().encodeToString(encryptRSA(AES, RSA)));
                                         break;
                                         
-                case "RSA":             String u = getter.readLine();
+                case "RSA_Insert":      String u = getter.readLine();
                                         String rsa_get =getter.readLine();
                                         claves.put(u, decryptRSA(Base64.getDecoder().decode(rsa_get.getBytes()),keys.getPrivate()));
                                         break;
                 
                 case "MESSAGE":         d = getter.readLine();
-                                        if(!(user.startsWith("HACKER"))){
-                                            m = getter.readLine();
-                                            if(d.equals(destination+ ":")){
-                                                Screen.append(d);
-                                                Screen.append(decryptAES(claves.get(d.split(":")[0]),"8u87y6t5r4efghyt",m) + "\n");                        
-                                            }
-                                            chats.put(d.split(":")[0], chats.get(d.split(":")[0])+d+decryptAES(claves.get(d.split(":")[0]),"8u87y6t5r4efghyt",m)+"\n");
-                                            
+                                        m = getter.readLine();
+                                        if(d.equals(destination)){
+                                            Screen.append(d+"\n");
+                                            Screen.append(decryptAES(claves.get(d),"8u87y6t5r4efghyt",m) + "\n");                        
                                         }
-                                        else{
-                                            Screen.append(x.substring(8));
-                                            Screen.append(getter.readLine()+"\n");
-                                        }
+                                        chats.put(d, chats.get(d)+d+"\n"+decryptAES(claves.get(d),"8u87y6t5r4efghyt",m)+"\n"); 
                                         break;
-                
             }
-            /*
-            if (x.startsWith("SUBMITNAME")) {
-                Login login = new Login();
-                user=login.getUsername();
-                if(user == null)
-                    System.exit(0);
-                else
-                    outer.println(user);
-            } 
-            else if (x.startsWith("NAMEACCEPTED")) {
-                user_name.setText(user);
-                outer.println("RSA_Register");
-                //System.out.println("Original: "+keys.getPublic());
-                //System.out.println("Encoded: "+Base64.getEncoder().encodeToString(keys.getPublic().getEncoded()));
-                outer.println(Base64.getEncoder().encodeToString(keys.getPublic().getEncoded()));
-                setVisible(true);
-               
-            } 
-            else if (x.startsWith("ADD")) {
-                //System.out.println("GET "+x.substring(4));
-                addFriend(x.substring(4));
-            } 
-            else if(x.startsWith("RSA_Request")){
-                RSA = getRSA(x.substring(11));
-                
-                String AES = "Bar12345Bar12345";
-                //AES = Base64.getEncoder().encodeToString(AES.getBytes());
-                claves.put(destination, AES);
-                outer.println("RSA_Push");
-                outer.println(destination);
-                outer.println(Base64.getEncoder().encodeToString(encryptRSA(AES, RSA)));
-                System.out.println("RSA Sended!");
-            }
-            else if (x.startsWith("RSA")){
-                String u = x.split(" ")[1];
-                String rsa_get =getter.readLine();
-                claves.put(u, decryptRSA(Base64.getDecoder().decode(rsa_get.getBytes()),keys.getPrivate()));
-            }    
-            else if (x.equals("MESSAGE")) {
-                split=x.split(" ");
-                System.out.println("NOMBRE DE USUARIO: "+user);
-                if(!(user.startsWith("HACKER"))){
-                    if(split[1].equals(destination+ ":")){
-                        Screen.append(x.substring(8));
-                        Screen.append(decryptAES(claves.get(split[1].split(":")[0]),"8u87y6t5r4efghyt",getter.readLine()) + "\n");
-                    }
-                        
-                    chats.put(split[1].split(":")[0], chats.get(split[1].split(":")[0])+x.substring(8)+decryptAES(claves.get(split[1].split(":")[0]),"8u87y6t5r4efghyt",getter.readLine())+"\n");
-
-                    System.out.println("Key: "+destination+" // Value: "+chats.get(destination));
-                }
-                else{
-                    Screen.append(x.substring(8));
-                    Screen.append(getter.readLine()+"\n");
-                    //Screen.append(decryptAES(claves.get(split[1].split(":")[0]),"8u87y6t5r4efghyt",getter.readLine()) + "\n");
-                }
-            }     
-*/
         }
-    }
-    
-    private String getUserName() {
-        
-        Login login = new Login();
-        login.setVisible(true);
-        
-        return JOptionPane.showInputDialog(
-            this,
-            login.getBase(),
-            JOptionPane.PLAIN_MESSAGE);
     }
     
     public void addFriend(String name){
@@ -650,8 +566,6 @@ public class Client extends javax.swing.JFrame {
         chats.put(name, "");
         claves.put(name, "none");
         System.out.println("RSA Send");
-                    
-        
     }
     
     private JPanel getPanel(){
@@ -680,7 +594,7 @@ public class Client extends javax.swing.JFrame {
         return null;
     }
     
-	// DESENCRIPTAR CON CLAVE AES
+    // DESENCRIPTAR CON CLAVE AES
     public static String decryptAES(String key, String initVector, String cifrado) {
         try {
             IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
@@ -698,17 +612,17 @@ public class Client extends javax.swing.JFrame {
 
         return null;
     }
-        
+    
+    //GENERADOR DE CLAVES AES
     public static String generateAESKey(){
         String AESkey = null;
-        try{
-            
+        try{ 
             Key key;
             SecureRandom rand = new SecureRandom();
             KeyGenerator generator = KeyGenerator.getInstance("AES");
             generator.init(256, rand);
             key = generator.generateKey();
-            AESkey=key.toString();
+            AESkey=Base64.getEncoder().encodeToString(key.getEncoded()).substring(0, 16);
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -757,6 +671,40 @@ public class Client extends javax.swing.JFrame {
         }
         return new String(mensaje);
     }
+    
+    //CONVERSOR STRING TO PUBLIC KEY
+    private PublicKey getRSA(String rsa_key){
+        PublicKey pubKey=null;
+        try{
+           System.out.println("RSA metodo get: "+rsa_key);
+           
+            byte[] publicBytes = Base64.getDecoder().decode(rsa_key.getBytes());
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicBytes);
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            pubKey = keyFactory.generatePublic(keySpec);
+            System.out.println("Result "+pubKey);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        System.out.println("End getRSA()");
+        return pubKey;
+    }
+    
+    //HASH
+    public static String encodeHash (String password){
+        String hashed = null;
+        try{
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(password.getBytes());
+            hashed= Base64.getEncoder().encodeToString(hash);
+        }
+
+        catch (NoSuchAlgorithmException e){
+            e.printStackTrace();
+        }
+        return hashed;
+    }
+    
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField Input;

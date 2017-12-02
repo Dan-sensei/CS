@@ -1,6 +1,10 @@
 package Interface;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -12,56 +16,37 @@ import java.util.Map;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-
-
-/**
- * A multithreaded chat room server.  When a client connects the
- * server requests a screen name by sending the client the
- * text "SUBMITNAME", and keeps requesting a name until
- * a unique one is received.  After a client submits a unique
- * name, the server acknowledges with "NAMEACCEPTED".  Then
- * all messages from that client will be broadcast to all other
- * clients that have submitted a unique screen name.  The
- * broadcast messages are prefixed with "MESSAGE ".
- *
- * Because this is just a teaching example to illustrate a simple
- * chat server, there are a few features that have been left out.
- * Two are very useful and belong in production code:
- *
- *     1. The protocol should be enhanced so that the client can
- *        send clean disconnect messages to the server.
- *
- *     2. The server should do some logging.
- */
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.util.Base64;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.crypto.Cipher;
 
 public class Server {
 
-    /**
-     * The port that the server listens on.
-     */
     private static final int PORT = 9001;
-
 
     private static HashMap<String,PrintWriter> user;
     private static HashMap<String,String> public_rsa;
-    /**
-     * The appplication main method, which just listens on a port and
-     * spawns handler threads.
-     */
+    
     public static void main(String[] args) throws Exception {
-        System.out.println("The chat server is running.");
+        System.out.println("El servidor está en marcha");
         
         user = new HashMap<String,PrintWriter>();
         public_rsa = new HashMap<String, String>();
         InetAddress ip;
         try {
             ip = InetAddress.getLocalHost();
-            System.out.println("Current IP address : " + ip.getHostAddress());
+            System.out.println("IP Actual : " + ip.getHostAddress());
         } catch (UnknownHostException e) {
             e.printStackTrace();
             System.exit(0);
         }
-
+        
+        
+        
         ServerSocket listener = new ServerSocket(PORT);
         try {
             while (true) {
@@ -72,45 +57,61 @@ public class Server {
         }
     }
 
-    /**
-     * A handler thread class.  Handlers are spawned from the listening
-     * loop and are responsible for a dealing with a single client
-     * and broadcasting its messages.
-     */
     
     private static class Handler extends Thread {
         private String name;
+        private String pass;
         private Socket socket;
         private BufferedReader in;
         private PrintWriter out;
+        
+        private BufferedReader reader;
+        private BufferedWriter writer;
+        String hash;
+        KeyPair keys;
 
-        /**
-         * Constructs a handler thread, squirreling away the socket.
-         * All the interesting work is done in the run method.
-         */
         public Handler(Socket s) {
             socket = s;
+            hash = "Hash.txt";
+            keys = generateKeyPair();
+            base_check(hash);
+            try{
+                reader = new BufferedReader(new FileReader(hash));
+                writer = new BufferedWriter(new FileWriter(hash, true));
+            }catch(Exception e){}
         }
-
-        /**
-         * Services this thread's client by repeatedly requesting a
-         * screen name until a unique one has been submitted, then
-         * acknowledges the name and registers the output stream for
-         * the client in a global set, then repeatedly gets inputs and
-         * broadcasts them.
-         */
         public void run() {
             try {
 
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 out = new PrintWriter(socket.getOutputStream(), true);
-
+                String status;
+                
                 while (true) {
                     out.println("SUBMITNAME");
-                    name = in.readLine();
+                    out.println(Base64.getEncoder().encodeToString(keys.getPublic().getEncoded()));
+                    
+                    name = decryptRSA(Base64.getDecoder().decode(in.readLine().getBytes()),keys.getPrivate());
+                    pass = decryptRSA(Base64.getDecoder().decode(in.readLine().getBytes()),keys.getPrivate());
+                    
                     System.out.println(name);
-                    if (name.equals("") )
+
+                    if (name.equals("") || pass.equals("") )
                         return;       
+                    
+                    status = loging(name, pass);
+                    
+                    if(status.equals("REGISTERED") || status.equals("LOGED")){
+                        if (!user.containsKey(name)) {
+                            user.put(name, out);
+                            user.forEach(
+                                (k,v)->refresh(k)
+                            );
+                        }
+                        break;
+                    }
+
+                    /*
                     synchronized (user) {
                         if (!user.containsKey(name)) {
                             user.put(name, out);
@@ -120,8 +121,8 @@ public class Server {
                             break;
                         }
                     }
+                    */
                 }
-
                 out.println("NAMEACCEPTED");
                 String dest;
                 String input;
@@ -133,14 +134,13 @@ public class Server {
                     System.out.println("Dest: "+dest);
                     switch (m){
                         case "MESSAGE":         input=in.readLine();
-                                                System.out.println("Input: "+input);
                                                 /*
                                                 user.get("HACKER").println("MESSAGE");
                                                 user.get("HACKER").println(name + ": ");
                                                 user.get("HACKER").println(input);
                                                 */
                                                 user.get(dest).println("MESSAGE");
-                                                user.get(dest).println(name + ":");
+                                                user.get(dest).println(name);
                                                 user.get(dest).println(input);
                                                 break;
                                             
@@ -151,7 +151,7 @@ public class Server {
                                             
                         case "RSA_Push":        String rsa = in.readLine();
                                                 System.out.println("RSA Push to "+dest+" "+rsa);
-                                                user.get(dest).println("RSA");
+                                                user.get(dest).println("RSA_Insert");
                                                 user.get(dest).println(name);
                                                 user.get(dest).println(rsa);
                                                 break;     
@@ -160,16 +160,14 @@ public class Server {
                                                 break;
                     }
                 }
-            } catch (IOException e) {
-                System.out.println(e);
-            } finally {
-                if (user != null) {
-                    user.remove(name);
-                }
+            } catch (IOException e) { System.out.println(e);} 
+            
+            finally {
+                if (user != null) 
+                    user.remove(name);   
                 try {
                     socket.close();
-                } catch (IOException e) {
-                }
+                } catch (IOException e) {}
             }
         }
         
@@ -181,37 +179,68 @@ public class Server {
                 user.get(k).println(name);
             }
         }
+        
+        
+        public static String decryptRSA(byte[] cifrado, PrivateKey key){
+            byte[] mensaje = null;
+            try {
+                Cipher encriptador = Cipher.getInstance("RSA");
+                encriptador.init(Cipher.DECRYPT_MODE, key);
+                mensaje = encriptador.doFinal(cifrado);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return new String(mensaje);
+        }
+        
+        public static KeyPair generateKeyPair(){
+            KeyPair keyPair = null;
+            try {
+
+                KeyPairGenerator rsaKeyGen = KeyPairGenerator.getInstance("RSA");
+                rsaKeyGen.initialize(1024);
+                keyPair = rsaKeyGen.generateKeyPair();
+                //PublicKey publicKey = keyPair.getPublic();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return keyPair;
+        }
+        //-------------------METODOS PARA LOGIN----------------------
+        void base_check(String filename) {
+            File data_base = new File(filename);
+            if (!data_base.exists()) {
+                try {
+                    System.out.println("Creating file");
+                    data_base.createNewFile();
+                } catch (IOException ex) {
+                    Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+        
+        public String loging(String username, String password) {
+            try {
+                String sn, sp;
+                while ((sn = reader.readLine()) != null) {
+                    sp = reader.readLine();
+                    if (sn.equals(username)) {
+                        if(sp.equals(password))
+                            return "LOGED";
+                        else
+                            return "ERROR";
+                    }
+                }
+                writer.write(username);
+                writer.newLine();
+                writer.write(password);
+                writer.newLine();
+                writer.close();
+            } catch (IOException ex) {
+                Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            return "REGISTERED";
+        }
     }
 }
-
-                    /*
-                    if(m.equals("MESSAGE")){
-                        dest = in.readLine();
-                        input=in.readLine();
-                        System.out.println(dest + " "+input);
-                        if (dest==null || input == null) {
-                            return;
-                        }
-                        System.out.println("Received "+input);  
-                        user.get("HACKER").println("MESSAGE " + name + ": ");
-                        user.get("HACKER").println(input);
-                        user.get(dest).println("MESSAGE " + name + ": ");
-                        user.get(dest).println(input);
-                    }
-                    else if (m.equals("RSA_request")){
-                        dest = in.readLine();
-                        //System.out.println("getRSA() SERVER "+dest+" "+public_rsa.get(dest));
-                        out.println("RSA_request"+public_rsa.get(dest));
-                    }
-                    else if(m.equals("RSA_push")){
-                        dest = in.readLine();
-                        String rsa = in.readLine();
-                        //System.out.println("RSA Push to "+dest+" "+rsa);
-                        user.get(dest).println("RSA "+name);
-                        user.get(dest).println(rsa);
-                    }
-                    else if (m.equals("RSA_Register")){
-                        public_rsa.put(name, in.readLine());
-                        //System.out.println("Server "+name+" "+public_rsa.get(name));
-                    }
-                    */
