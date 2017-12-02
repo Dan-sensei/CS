@@ -240,10 +240,12 @@ public class Login extends javax.swing.JDialog {
     }
     
     private void erase(){
-        user=Username.getText();
-        pass= new String(Password.getPassword());
-        frame.dispose();
-        this.dispose();
+        if(!Username.getText().equals("") && !new String(Password.getPassword()).equals("")){
+            user= Username.getText();
+            pass= new String(Password.getPassword());
+            frame.dispose();
+            this.dispose();
+        }
     }
     /**
      * @param args the command line arguments

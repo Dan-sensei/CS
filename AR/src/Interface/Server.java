@@ -3,6 +3,7 @@ package Interface;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -18,6 +19,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.util.Base64;
 import java.util.logging.Level;
@@ -87,17 +90,14 @@ public class Server {
                 out = new PrintWriter(socket.getOutputStream(), true);
                 String status;
                 
+                out.println(Base64.getEncoder().encodeToString(keys.getPublic().getEncoded()));
                 while (true) {
                     out.println("SUBMITNAME");
-                    out.println(Base64.getEncoder().encodeToString(keys.getPublic().getEncoded()));
-                    
+  
                     name = decryptRSA(Base64.getDecoder().decode(in.readLine().getBytes()),keys.getPrivate());
                     pass = decryptRSA(Base64.getDecoder().decode(in.readLine().getBytes()),keys.getPrivate());
                     
                     System.out.println(name);
-
-                    if (name.equals("") || pass.equals("") )
-                        return;       
                     
                     status = loging(name, pass);
                     
@@ -207,6 +207,21 @@ public class Server {
             }
             return keyPair;
         }
+        
+        public static String encodeHash (String password){
+            String hashed = null;
+            try{
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                byte[] hash = digest.digest(password.getBytes());
+                hashed= Base64.getEncoder().encodeToString(hash);
+            }
+
+            catch (NoSuchAlgorithmException e){
+                e.printStackTrace();
+            }
+            return hashed;
+        }
+        
         //-------------------METODOS PARA LOGIN----------------------
         void base_check(String filename) {
             File data_base = new File(filename);
@@ -222,17 +237,21 @@ public class Server {
         
         public String loging(String username, String password) {
             try {
+                reader = new BufferedReader(new FileReader(hash));
+                writer = new BufferedWriter(new FileWriter(hash, true));
+                
                 String sn, sp;
-                while ((sn = reader.readLine()) != null) {
+                sn = reader.readLine();
+                do{
                     sp = reader.readLine();
-                    if (sn.equals(username)) {
-                        if(sp.equals(password))
-                            return "LOGED";
-                        else
-                            return "ERROR";
+                    if (sn.equals(encodeHash(username))) {
+                        if(sp.equals(password)) return "LOGED";
+                        else return "ERROR";
                     }
-                }
-                writer.write(username);
+                    sn = reader.readLine();
+                }while(sn!=null);
+                System.out.println("Writing: "+username + " "+password);
+                writer.write(encodeHash(username));
                 writer.newLine();
                 writer.write(password);
                 writer.newLine();

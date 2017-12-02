@@ -507,13 +507,14 @@ public class Client extends javax.swing.JFrame {
         String x;
         String d;
         String m;
+        ServerRSA = getRSA(getter.readLine());  //Cogemos la RSA del servidor
+        
         while(true){
             x = getter.readLine();
             System.out.println("GET "+x);
             
             switch(x){
-                case "SUBMITNAME":      ServerRSA = getRSA(getter.readLine());  //Cogemos la RSA del servidor
-                                        Login login = new Login(error);
+                case "SUBMITNAME":      Login login = new Login(error);
                                         user=login.getUsername();
                                         pass=login.getPass();
                                         System.out.println(user+" "+pass);
