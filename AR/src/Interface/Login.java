@@ -13,6 +13,7 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import java.security.MessageDigest;
@@ -34,7 +35,7 @@ public class Login extends javax.swing.JDialog {
     private JFrame frame;
 
     
-    public Login(boolean error) {
+    public Login(boolean error, String n) {
         System.out.println("FRAAAAME");
         frame = new JFrame("My dialog asks....");
         frame.setUndecorated( true );
@@ -44,10 +45,6 @@ public class Login extends javax.swing.JDialog {
         
         initComponents();
         ERROR.setVisible(error);
-        //setDefaultCloseOperation(this.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-        setModal(true);
-        setVisible(true);
         
         Username.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e){
@@ -60,6 +57,19 @@ public class Login extends javax.swing.JDialog {
             }
         });
         
+        if(error)
+        addWindowListener( new WindowAdapter() {
+            public void windowOpened( WindowEvent e ){
+                Password.requestFocus();
+            }
+        }); 
+        
+        Username.setText(n);
+        //setDefaultCloseOperation(this.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setModal(true);
+        setVisible(true);
+                
     }
     
     public Image getIconImage(){

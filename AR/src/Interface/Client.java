@@ -514,7 +514,7 @@ public class Client extends javax.swing.JFrame {
             System.out.println("GET "+x);
             
             switch(x){
-                case "SUBMITNAME":      Login login = new Login(error);
+                case "SUBMITNAME":      Login login = new Login(error,user);
                                         user=login.getUsername();
                                         pass=login.getPass();
                                         System.out.println(user+" "+pass);
