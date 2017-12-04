@@ -20,6 +20,8 @@ import java.awt.GraphicsConfiguration;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.awt.image.WritableRaster;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -92,8 +94,11 @@ public class Client extends javax.swing.JFrame {
         StyleConstants.setAlignment(right, StyleConstants.ALIGN_RIGHT);
         StyleConstants.setBackground(left, Color.DARK_GRAY);
         StyleConstants.setBackground(right, Color.DARK_GRAY);
-        StyleConstants.setSpaceBelow(left, 5);
-        StyleConstants.setSpaceBelow(right, 5);
+        
+        StyleConstants.setSpaceAbove(left, 2);
+        StyleConstants.setSpaceAbove(right, 2);
+        StyleConstants.setSpaceBelow(left, 2);
+        StyleConstants.setSpaceBelow(right, 2);
         
         Input.setEditable(false);
       
@@ -111,7 +116,7 @@ public class Client extends javax.swing.JFrame {
                     
                     outer.println("MESSAGE");
                     outer.println(destination);
-                    outer.println(encryptAES(claves.get(destination), IVC, Input.getText()));
+                    outer.println(encryptAES(claves.get(destination), IVC, Input.getText().getBytes()));
                     try{
                         doc.setParagraphAttributes(doc.getLength(), 1, right, false);
                         doc.insertString(doc.getLength(), Input.getText()+"\n", right);
@@ -437,8 +442,8 @@ public class Client extends javax.swing.JFrame {
     }//GEN-LAST:event_jLabelDragMousePressed
 
     private void jLabelDragMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabelDragMouseDragged
-        int x=evt.getXOnScreen();
-        int y =evt.getYOnScreen();
+        int x = evt.getXOnScreen();
+        int y = evt.getYOnScreen();
         setLocation(x - xMouse-10, y-yMouse-7);
     }//GEN-LAST:event_jLabelDragMouseDragged
 
@@ -495,11 +500,18 @@ public class Client extends javax.swing.JFrame {
         try{
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File file = fc.getSelectedFile();
-            //This is where a real application would open the file.
+           
             BufferedImage image = ImageIO.read(file);
+            Image resize = image.getScaledInstance(300, -1, 0);
             
-             doc.insertString(doc.getLength(), "Opening: " + file.getAbsolutePath()+"\n", left);
-             //doc.insertString(doc.getLength(), "Opening: " + file.getAbsolutePath()+"\n", left);
+            WritableRaster raster = image.getRaster();
+            DataBufferByte data   = (DataBufferByte) raster.getDataBuffer();
+            
+            /*
+                encryptAES(claves.get(destination), IVC, data.getData()); 
+            */
+            Screen.insertIcon(new ImageIcon(resize));
+            //doc.insertString(doc.getLength(), "Opening: " + file.getAbsolutePath()+"\n", left);
              
         } else {
             doc.insertString(doc.getLength(), "OPen action cancelled\n", left);
@@ -632,15 +644,10 @@ public class Client extends javax.swing.JFrame {
         System.out.println("RSA Send");
     }
     
-    private JPanel getPanel(){
-        JPanel panel = new JPanel();
-        
-        return panel;
-    }
     ////////////////////////ENCRIPTACION///////////////////////////////////
     
     // ENCRIPTAR CON CLAVE AES
-    public static String encryptAES(String key, String initVector, String mensaje) {
+    public static String encryptAES(String key, String initVector, byte[] mensaje) {
 
     	try {
             IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
@@ -649,7 +656,7 @@ public class Client extends javax.swing.JFrame {
             Cipher encriptador = Cipher.getInstance("AES/CBC/PKCS5PADDING");
             encriptador.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
 
-            byte[] cifrado = encriptador.doFinal(mensaje.getBytes());
+            byte[] cifrado = encriptador.doFinal(mensaje);
 
             return Base64.getEncoder().encodeToString(cifrado);
         } catch (Exception ex) {

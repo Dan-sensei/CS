@@ -65,7 +65,7 @@ public class p {
         return aes;
     }
     
-    public static byte[] encryptAES(String key, String initVector, String mensaje) {
+    public static byte[] encryptAES(String key, String initVector, byte[] mensaje) {
 
     	try {
             IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
@@ -74,7 +74,7 @@ public class p {
             Cipher encriptador = Cipher.getInstance("AES/CBC/PKCS5PADDING");
             encriptador.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
 
-            byte[] cifrado = encriptador.doFinal(mensaje.getBytes());
+            byte[] cifrado = encriptador.doFinal(mensaje);
 
             return cifrado;
         } catch (Exception ex) {
@@ -144,7 +144,7 @@ public class p {
     }
     public static void main(String args[]) {
         KeyPair keys = generateKeyPair();
-        String p = "Dan";
+        String p = "Danas";
        /*
         byte []s = p.getBytes();
         System.out.println(s);
@@ -153,7 +153,7 @@ public class p {
         */
         String aes = generateAESKey();
 
-        byte []c = encryptAES(aes,"8u87y6t5r4efghyt",p);
+        byte []c = encryptAES(aes,"8u87y6t5r4efghyt",p.getBytes());
         
         System.out.println( Base64.getEncoder().encodeToString(c));
         System.out.println( decryptAES(aes,"8u87y6t5r4efghyt",c));
