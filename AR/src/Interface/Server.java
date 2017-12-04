@@ -98,7 +98,7 @@ public class Server {
                     pass = decryptRSA(Base64.getDecoder().decode(in.readLine().getBytes()),keys.getPrivate());
                     
                     System.out.println(name);
-                    
+                    System.out.println(pass);
                     status = loging(name, pass);
                     
                     if(status.equals("REGISTERED") || status.equals("LOGED")){
@@ -242,14 +242,14 @@ public class Server {
                 
                 String sn, sp;
                 sn = reader.readLine();
-                do{
+                while(sn!=null){
                     sp = reader.readLine();
                     if (sn.equals(encodeHash(username))) {
                         if(sp.equals(password)) return "LOGED";
                         else return "ERROR";
                     }
                     sn = reader.readLine();
-                }while(sn!=null);
+                }
                 System.out.println("Writing: "+username + " "+password);
                 writer.write(encodeHash(username));
                 writer.newLine();
