@@ -92,9 +92,7 @@ public class Client extends javax.swing.JFrame {
         
         StyleConstants.setAlignment(left, StyleConstants.ALIGN_LEFT);
         StyleConstants.setAlignment(right, StyleConstants.ALIGN_RIGHT);
-        StyleConstants.setBackground(left, Color.DARK_GRAY);
-        StyleConstants.setBackground(right, Color.DARK_GRAY);
-        
+
         StyleConstants.setSpaceAbove(left, 2);
         StyleConstants.setSpaceAbove(right, 2);
         StyleConstants.setSpaceBelow(left, 2);
