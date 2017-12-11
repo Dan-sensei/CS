@@ -66,6 +66,8 @@ public class Client extends javax.swing.JFrame {
     private HashMap<String,String> chats;
     private HashMap<String,String> claves;
     
+    private boolean borrando = false;
+    
     private int xMouse;
     private int yMouse;
     BufferedReader getter;
@@ -106,6 +108,8 @@ public class Client extends javax.swing.JFrame {
         destination = "none";
         
         keys = generateKeyPair();
+        System.out.println("PUBLIC KEY:\n "+keys.getPublic());
+        
         Screen.setEditable(false);
         
         Input.addActionListener(new ActionListener(){
@@ -477,7 +481,7 @@ public class Client extends javax.swing.JFrame {
     }//GEN-LAST:event_jLabelMaximizeMouseReleased
 
     private void friendsValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_friendsValueChanged
-        if (!evt.getValueIsAdjusting()) {
+        if (!borrando && !evt.getValueIsAdjusting()) {
             System.out.println("CHANGED: "+destination+" -> "+friends.getSelectedValue());
             destination=friends.getSelectedValue();
             Input.setEditable(true);
@@ -600,6 +604,9 @@ public class Client extends javax.swing.JFrame {
                                         
                 case "ADD":             addFriend(getter.readLine());
                                         break;
+                
+                case "REMOVE":          removeFriend(getter.readLine());
+                                        break;
                                         
                 case "RSA_Request":     RSA = getRSA(getter.readLine());
                                         String AES = generateAESKey();
@@ -634,6 +641,14 @@ public class Client extends javax.swing.JFrame {
         }
     }
     
+    public void removeFriend(String name){
+        borrando = true;
+        friends.clearSelection();
+        list.removeElement(name);
+        chats.put(name, "");
+        claves.put(name, "none");
+        borrando = false;
+    }
     public void addFriend(String name){
         System.out.println("AddFriend "+name);
         list.addElement(name);
@@ -745,7 +760,7 @@ public class Client extends javax.swing.JFrame {
     private PublicKey getRSA(String rsa_key){
         PublicKey pubKey=null;
         try{
-           System.out.println("RSA metodo get: "+rsa_key);
+           System.out.println("RSA metodo get:\n "+rsa_key);
            
             byte[] publicBytes = Base64.getDecoder().decode(rsa_key.getBytes());
             X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicBytes);

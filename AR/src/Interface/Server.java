@@ -163,12 +163,21 @@ public class Server {
             } catch (IOException e) { System.out.println(e);} 
             
             finally {
-                if (user != null) 
-                    user.remove(name);   
+                if (user != null) {
+                    user.forEach(
+                        (k,v)->delete(k)
+                    );
+                    user.remove(name);  
+                }
                 try {
                     socket.close();
                 } catch (IOException e) {}
             }
+        }
+        
+        private void delete(String k){
+            user.get(k).println("REMOVE");
+            user.get(k).println(name);
         }
         
         private void refresh(String k){
